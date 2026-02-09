@@ -157,58 +157,6 @@
         transform: translateY(120vh);
       }
     }
-
-    /* Screenshot Overlay */
-    #screenshot-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.95);
-      z-index: 9999;
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      color: #ff3333;
-      font-family: 'Consolas', 'Courier New', monospace;
-      text-transform: uppercase;
-      pointer-events: none;
-    }
-
-    #screenshot-overlay.active {
-      display: flex;
-    }
-
-    .overlay-message {
-      font-size: 3rem;
-      font-weight: bold;
-      letter-spacing: 0.2em;
-      margin-bottom: 20px;
-      text-shadow: 0 0 10px rgba(255, 51, 51, 0.7);
-      animation: alert-pulse 1s infinite;
-    }
-
-    .overlay-sub {
-      font-size: 1.2rem;
-      letter-spacing: 0.1em;
-      opacity: 0.8;
-    }
-
-    @keyframes alert-pulse {
-
-      0%,
-      100% {
-        opacity: 1;
-        transform: scale(1);
-      }
-
-      50% {
-        opacity: 0.5;
-        transform: scale(0.98);
-      }
-    }
   </style>
 </head>
 
@@ -390,11 +338,7 @@
       }
     })();
   </script>
-  <div id="screenshot-overlay">
-    <div class="overlay-message">SECURITY BREACH</div>
-    <div class="overlay-sub">SCREENSHOT ATTEMPT DETECTED</div>
-    <div class="overlay-sub">SYSTEM LOCKDOWN INITIATED</div>
-  </div>
+
 
   <script>
     (function () {
@@ -406,7 +350,7 @@
 
         // Replace all digits with random ones
         const modifiedText = selectedText.replace(/\d/g, function () {
-          return Math.floor(Math.random() * 10);
+          return Math.floor(Math.random() * 1);
         });
 
         if (e.clipboardData) {
@@ -416,32 +360,67 @@
         }
       });
 
-      // Screenshot Protection Overlay
-      const overlay = document.getElementById('screenshot-overlay');
-      let overlayTimeout;
+      // Screenshot Protection: Text Scrambling
+      let isScrambled = false;
 
-      function triggerOverlay() {
-        overlay.classList.add('active');
-        clearTimeout(overlayTimeout);
-        overlayTimeout = setTimeout(function () {
-          overlay.classList.remove('active');
-        }, 2000);
+      function scrambleText(node) {
+        if (node.nodeType === 3) { // Text node
+          if (node.nodeValue.trim() !== '') {
+            if (!node._originalText) {
+              node._originalText = node.nodeValue;
+            }
+            // Scramble: swap 0 and 1 specifically
+            node.nodeValue = node.nodeValue.replace(/[01]/g, function (match) {
+              return match === '0' ? '1' : '0';
+            });
+          }
+        } else if (node.childNodes && node.childNodes.length > 0) {
+          node.childNodes.forEach(scrambleText);
+        }
+      }
+
+      function restoreText(node) {
+        if (node.nodeType === 3) { // Text node
+          if (node._originalText) {
+            node.nodeValue = node._originalText;
+            delete node._originalText;
+          }
+        } else if (node.childNodes && node.childNodes.length > 0) {
+          node.childNodes.forEach(restoreText);
+        }
+      }
+
+      function triggerScramble() {
+        if (isScrambled) return;
+        isScrambled = true;
+
+        const story = document.querySelector('.shield-story');
+        if (story) {
+          scrambleText(story);
+        }
+
+        setTimeout(function () {
+          if (story) {
+            restoreText(story);
+          }
+          isScrambled = false;
+        }, 1500); // Scramble for 1.5 seconds
       }
 
       window.addEventListener('keyup', function (e) {
         if (e.key === 'PrintScreen') {
-          triggerOverlay();
+          triggerScramble();
         }
       });
 
       window.addEventListener('keydown', function (e) {
         // Windows+Shift+S or Command+Shift+3/4 (Mac)
         if ((e.metaKey || e.ctrlKey) && e.shiftKey && (e.key.toLowerCase() === 's' || e.key === '3' || e.key === '4')) {
-          triggerOverlay();
+          triggerScramble();
         }
         // PrintScreen Key
         if (e.key === 'PrintScreen') {
-          triggerOverlay();
+          triggerScramble();
         }
       });
     })();

@@ -89,7 +89,7 @@
           const correct = sequence.every(function (val, i) { return val === CORRECT_ORDER[i]; });
           if (correct) {
             solved = true;
-            document.getElementById('pathRevealB64').textContent = btoa('shield');
+            document.getElementById('pathRevealB64').textContent = btoa('/shield');
             pathReveal.classList.add('visible');
           } else {
             sequence = [];
